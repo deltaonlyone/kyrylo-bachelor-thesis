@@ -1,0 +1,1 @@
+# kyrylo-bachelor-thesis
