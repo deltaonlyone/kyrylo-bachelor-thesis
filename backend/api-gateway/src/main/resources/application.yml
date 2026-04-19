@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        corsConfigurations:
+          "[/**]":
+            allowedOriginPatterns:
+              - "http://localhost:*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+      routes:
+        - id: auth-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/auth/**
+        - id: user-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/users/**
+        - id: course-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/courses/**,/api/enrollments/**,/api/quizzes/**
+        - id: core-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/core/**
+          filters:
+            - RewritePath=/api/core/(?<segment>.*), /$\{segment}
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
