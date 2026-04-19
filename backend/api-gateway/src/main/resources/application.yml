@@ -7,15 +7,13 @@ spring:
         corsConfigurations:
           "[/**]":
             allowedOriginPatterns:
-              - "http://localhost:*"
-            allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - PATCH
-              - DELETE
-              - OPTIONS
+              - "*"
+            allowedMethods: "*"
             allowedHeaders: "*"
+            allowCredentials: true
+      default-filters:
+        - RemoveRequestHeader=Origin
+
       routes:
         - id: auth-service
           uri: http://localhost:8082
