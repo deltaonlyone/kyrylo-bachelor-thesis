@@ -3,15 +3,15 @@ import { alpha } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import type { ReactNode } from 'react'
 
+const MotionBox = motion.create(Box)
+
 type Props = {
-  title?: string
+  title?: ReactNode
   subtitle?: ReactNode
   children: ReactNode
   /** Якщо true — лише контейнер без блоку заголовка (наприклад, детальна сторінка). */
   omitHeader?: boolean
 }
-
-const MotionBox = motion.create(Box)
 
 /** Обгортка сторінки: контейнер, анімований заголовок і підзаголовок. */
 export function PageShell({ title, subtitle, children, omitHeader }: Props) {

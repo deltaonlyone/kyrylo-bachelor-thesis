@@ -6,6 +6,9 @@ import { LoginPage } from './pages/LoginPage'
 import { ForbiddenPage } from './pages/ForbiddenPage'
 import { CuratorDashboardPage } from './pages/curator/CuratorDashboardPage'
 import { CuratorCourseDetailPage } from './pages/curator/CuratorCourseDetailPage'
+import { CuratorCourseEditPage } from './pages/curator/CuratorCourseEditPage'
+import { SuperAdminOrganizationsPage } from './pages/curator/SuperAdminOrganizationsPage'
+import { OrganizationDetailPage } from './pages/curator/OrganizationDetailPage'
 import { EducatorDashboardPage } from './pages/educator/EducatorDashboardPage'
 import { LearnerDashboardPage } from './pages/learner/LearnerDashboardPage'
 import { LearnerCoursePage } from './pages/learner/LearnerCoursePage'
@@ -29,6 +32,18 @@ export default function App() {
             <Route
               path="/curator/courses/:courseId"
               element={<CuratorCourseDetailPage />}
+            />
+            <Route
+              path="/curator/courses/:courseId/edit"
+              element={<CuratorCourseEditPage />}
+            />
+            <Route
+              path="/curator/organizations"
+              element={<SuperAdminOrganizationsPage />}
+            />
+            <Route
+              path="/curator/organizations/:orgId"
+              element={<OrganizationDetailPage />}
             />
           </Route>
         </Route>

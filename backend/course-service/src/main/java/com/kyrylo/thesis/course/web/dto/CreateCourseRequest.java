@@ -22,6 +22,9 @@ public class CreateCourseRequest {
     private CourseStatus status;
 
     @NotNull
+    private Long organizationId;
+
+    @NotNull
     @Valid
     private List<CreateModuleRequest> modules = new ArrayList<>();
 }

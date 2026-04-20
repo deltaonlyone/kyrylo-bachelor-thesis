@@ -191,15 +191,12 @@ export function LoginPage() {
             )}
 
             {/* Form */}
-            <MotionBox
-              component="form"
-              onSubmit={onSubmit}
-              noValidate
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4, duration: 0.35 }}
             >
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <Box component="form" onSubmit={onSubmit} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                 <TextField
                   label="Корпоративний email"
                   type="email"
@@ -240,7 +237,7 @@ export function LoginPage() {
                   {loading ? 'Вхід…' : 'Увійти в систему'}
                 </Button>
               </Box>
-            </MotionBox>
+            </motion.div>
 
             <Typography
               variant="caption"

@@ -33,7 +33,7 @@ const cardVariants = {
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.08, duration: 0.35, ease: 'easeOut' },
+    transition: { delay: i * 0.08, duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] as const },
   }),
 }
 
@@ -50,7 +50,7 @@ export function LearnerDashboardPage() {
     if (!user) return
     setLoading(true)
     setError(null)
-    Promise.all([fetchCourses(), fetchMyEnrollments(user.userId)])
+    Promise.all([fetchCourses(), fetchMyEnrollments()])
       .then(([allCourses, myEnrollments]) => {
         setCourses(allCourses.filter((c) => c.status === 'PUBLISHED'))
         setEnrollments(myEnrollments)
@@ -71,7 +71,7 @@ export function LearnerDashboardPage() {
     if (!user) return
     setEnrollingId(courseId)
     try {
-      const enrollment = await enrollInCourse(courseId, user.userId)
+      const enrollment = await enrollInCourse(courseId)
       setEnrollments((prev) => [...prev, enrollment])
       navigate(`/learner/courses/${courseId}`)
     } catch (err: unknown) {

@@ -7,6 +7,7 @@ import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.kyrylo.thesis.user.domain.CuratorGlobalRole;
 import com.kyrylo.thesis.user.domain.UserRole;
 
 import io.jsonwebtoken.Claims;
@@ -23,6 +24,7 @@ import io.jsonwebtoken.security.Keys;
  *   <li>{@code sub} — userId (Long → String)</li>
  *   <li>{@code email} — email користувача</li>
  *   <li>{@code role} — роль (CURATOR / EDUCATOR / LEARNER)</li>
+ *   <li>{@code curatorGlobalRole} — NONE / SUPER_ADMIN (для кураторів)</li>
  * </ul>
  */
 @Component
@@ -39,14 +41,20 @@ public class JwtTokenProvider {
     }
 
     /** Створити JWT для автентифікованого користувача. */
-    public String generateToken(Long userId, String email, UserRole role) {
+    public String generateToken(
+            Long userId,
+            String email,
+            UserRole role,
+            CuratorGlobalRole curatorGlobalRole) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
+        CuratorGlobalRole cgr = curatorGlobalRole != null ? curatorGlobalRole : CuratorGlobalRole.NONE;
 
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("email", email)
                 .claim("role", role.name())
+                .claim("curatorGlobalRole", cgr.name())
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(signingKey)
@@ -82,5 +90,13 @@ public class JwtTokenProvider {
 
     public UserRole getRole(String token) {
         return UserRole.valueOf(validateAndGetClaims(token).get("role", String.class));
+    }
+
+    public CuratorGlobalRole getCuratorGlobalRole(String token) {
+        String raw = validateAndGetClaims(token).get("curatorGlobalRole", String.class);
+        if (raw == null || raw.isBlank()) {
+            return CuratorGlobalRole.NONE;
+        }
+        return CuratorGlobalRole.valueOf(raw);
     }
 }

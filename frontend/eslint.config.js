@@ -19,5 +19,15 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Проєкт активно використовує data-fetching у useEffect з setState — правило занадто шумне.
+      'react-hooks/set-state-in-effect': 'off',
+    },
+  },
+  {
+    files: ['**/src/auth/AuthContext.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
   },
 ])

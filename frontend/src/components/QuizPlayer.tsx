@@ -8,12 +8,16 @@ import {
   Button,
   Card,
   CardContent,
+  Checkbox,
   CircularProgress,
+  FormControl,
   FormControlLabel,
+  FormGroup,
   LinearProgress,
   Paper,
   Radio,
   RadioGroup,
+  TextField,
   Typography,
 } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
@@ -37,7 +41,7 @@ export function QuizPlayer({ lessonId, lessonTitle }: QuizPlayerProps) {
   const [quiz, setQuiz] = useState<Quiz | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [answers, setAnswers] = useState<Record<number, number>>({})
+  const [answers, setAnswers] = useState<Record<number, number | number[] | string>>({})
   const [currentStep, setCurrentStep] = useState(0)
   const [result, setResult] = useState<QuizResult | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -76,10 +80,23 @@ export function QuizPlayer({ lessonId, lessonTitle }: QuizPlayerProps) {
   const questions = [...quiz.questions].sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id)
   const total = questions.length
   const q = questions[currentStep]
-  const allAnswered = questions.every((qn) => answers[qn.id] !== undefined)
+  const allAnswered = questions.every((qn) => {
+    const value = answers[qn.id]
+    if (qn.type === 'OPEN_TEXT') return typeof value === 'string' && value.trim().length > 0
+    if (qn.type === 'MULTI') return Array.isArray(value) && value.length > 0
+    return typeof value === 'number'
+  })
   const progress = (Object.keys(answers).length / total) * 100
 
-  function pick(qId: number, optId: number) { setAnswers((p) => ({ ...p, [qId]: optId })) }
+  function pickSingle(qId: number, optId: number) { setAnswers((p) => ({ ...p, [qId]: optId })) }
+  function pickMulti(qId: number, optId: number) {
+    setAnswers((prev) => {
+      const current = Array.isArray(prev[qId]) ? [...(prev[qId] as number[])] : []
+      const has = current.includes(optId)
+      return { ...prev, [qId]: has ? current.filter((id) => id !== optId) : [...current, optId] }
+    })
+  }
+  function writeText(qId: number, value: string) { setAnswers((p) => ({ ...p, [qId]: value })) }
   function next() { if (currentStep < total - 1) setCurrentStep((p) => p + 1) }
   function prev() { if (currentStep > 0) setCurrentStep((p) => p - 1) }
 
@@ -91,10 +108,12 @@ export function QuizPlayer({ lessonId, lessonTitle }: QuizPlayerProps) {
         quizId: quiz.id,
         answers: Object.entries(answers).map(([qId, optId]) => ({
           questionId: Number(qId),
-          selectedOptionId: optId,
+          selectedOptionId: typeof optId === 'number' ? optId : undefined,
+          selectedOptionIds: Array.isArray(optId) ? optId : undefined,
+          textAnswer: typeof optId === 'string' ? optId : undefined,
         })),
       }
-      setResult(await submitQuiz(payload, user.userId))
+      setResult(await submitQuiz(payload))
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Помилка відправки')
     } finally {
@@ -246,10 +265,45 @@ export function QuizPlayer({ lessonId, lessonTitle }: QuizPlayerProps) {
               {q.text}
             </Typography>
 
-            <RadioGroup
-              value={answers[q.id] ?? ''}
-              onChange={(_, val) => pick(q.id, Number(val))}
-            >
+            {q.type === 'OPEN_TEXT' ? (
+              <TextField
+                fullWidth
+                multiline
+                minRows={4}
+                value={typeof answers[q.id] === 'string' ? answers[q.id] : ''}
+                onChange={(e) => writeText(q.id, e.target.value)}
+                placeholder="Введіть відповідь"
+              />
+            ) : null}
+            {q.type === 'MULTI' ? (
+              <FormControl component="fieldset" sx={{ width: '100%' }}>
+                <FormGroup>
+                  {q.options.map((opt, idx) => {
+                    const selected = Array.isArray(answers[q.id]) && (answers[q.id] as number[]).includes(opt.id)
+                    return (
+                      <Card
+                        key={opt.id}
+                        variant="outlined"
+                        sx={{ mb: 1.5, borderColor: selected ? 'primary.main' : alpha('#fff', 0.06) }}
+                        onClick={() => pickMulti(q.id, opt.id)}
+                      >
+                        <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                          <FormControlLabel
+                            control={<Checkbox checked={selected} onChange={() => pickMulti(q.id, opt.id)} />}
+                            label={`${String.fromCharCode(65 + idx)}. ${opt.text}`}
+                          />
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
+                </FormGroup>
+              </FormControl>
+            ) : null}
+            {q.type !== 'MULTI' && q.type !== 'OPEN_TEXT' ? (
+              <RadioGroup
+                value={typeof answers[q.id] === 'number' ? answers[q.id] : ''}
+                onChange={(_, val) => pickSingle(q.id, Number(val))}
+              >
               {q.options.map((opt, idx) => (
                 <Card
                   key={opt.id}
@@ -265,7 +319,7 @@ export function QuizPlayer({ lessonId, lessonTitle }: QuizPlayerProps) {
                       bgcolor: alpha(theme.palette.primary.main, 0.03),
                     },
                   }}
-                  onClick={() => pick(q.id, opt.id)}
+                  onClick={() => pickSingle(q.id, opt.id)}
                 >
                   <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                     <FormControlLabel
@@ -284,7 +338,8 @@ export function QuizPlayer({ lessonId, lessonTitle }: QuizPlayerProps) {
                   </CardContent>
                 </Card>
               ))}
-            </RadioGroup>
+              </RadioGroup>
+            ) : null}
           </MotionBox>
         </AnimatePresence>
       </Box>
@@ -310,9 +365,25 @@ export function QuizPlayer({ lessonId, lessonTitle }: QuizPlayerProps) {
           {Object.keys(answers).length}/{total}
         </Typography>
         {currentStep < total - 1 ? (
-          <Button variant="contained" onClick={next} disabled={answers[q.id] === undefined} size="small">
+          (() => {
+            const answer = answers[q.id]
+            const canProceed =
+              q.type === 'OPEN_TEXT'
+                ? typeof answer === 'string' && answer.trim().length > 0
+                : q.type === 'MULTI'
+                  ? Array.isArray(answer) && answer.length > 0
+                  : typeof answer === 'number'
+            return (
+          <Button
+            variant="contained"
+            onClick={next}
+            disabled={!canProceed}
+            size="small"
+          >
             Далі
           </Button>
+            )
+          })()
         ) : (
           <Button
             variant="contained"

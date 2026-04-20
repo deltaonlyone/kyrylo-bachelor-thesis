@@ -42,4 +42,10 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     private UserRole role;
+
+    /** Лише для {@link UserRole#CURATOR}; для інших ролей має бути {@link CuratorGlobalRole#NONE}. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "curator_global_role", nullable = false, length = 32)
+    @Builder.Default
+    private CuratorGlobalRole curatorGlobalRole = CuratorGlobalRole.NONE;
 }

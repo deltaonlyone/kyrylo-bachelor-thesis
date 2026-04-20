@@ -1,5 +1,6 @@
 package com.kyrylo.thesis.user.web.dto;
 
+import com.kyrylo.thesis.user.domain.CuratorGlobalRole;
 import com.kyrylo.thesis.user.domain.UserRole;
 
 import jakarta.validation.constraints.Email;
@@ -25,4 +26,7 @@ public class CreateUserRequest {
 
     @NotNull
     private UserRole role;
+
+    /** Лише для ролі CURATOR; задає лише супер-адмін. */
+    private CuratorGlobalRole curatorGlobalRole;
 }

@@ -10,6 +10,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.kyrylo.thesis.user.domain.UserRole;
+
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -39,14 +41,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = header.substring(BEARER_PREFIX.length());
             if (jwtTokenProvider.isValid(token)) {
                 Claims claims = jwtTokenProvider.validateAndGetClaims(token);
-                String userId = claims.getSubject();
-                String role = claims.get("role", String.class);
+                Long userId = Long.valueOf(claims.getSubject());
+                String roleStr = claims.get("role", String.class);
+                UserRole role = UserRole.valueOf(roleStr);
+
+                SecurityUserPrincipal principal = new SecurityUserPrincipal(
+                        userId,
+                        role,
+                        jwtTokenProvider.getCuratorGlobalRole(token));
 
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(
-                                userId,
+                                principal,
                                 null,
-                                List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                                List.of(new SimpleGrantedAuthority("ROLE_" + roleStr))
                         );
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }

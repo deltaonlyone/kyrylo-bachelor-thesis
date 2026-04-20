@@ -3,6 +3,8 @@
  */
 export type UserRole = 'CURATOR' | 'EDUCATOR' | 'LEARNER'
 
+export type CuratorGlobalRole = 'NONE' | 'SUPER_ADMIN'
+
 /**
  * Відповідає com.kyrylo.thesis.user.web.dto.UserResponse
  * (Long id у JSON — число).
@@ -13,4 +15,5 @@ export interface User {
   firstName: string
   lastName: string
   role: UserRole
+  curatorGlobalRole?: CuratorGlobalRole
 }

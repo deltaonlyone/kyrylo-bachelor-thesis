@@ -5,12 +5,14 @@ import {
   CircularProgress,
   Link as MuiLink,
   Paper,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  Tabs,
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useState } from 'react'
@@ -25,6 +27,7 @@ export function CuratorDashboardPage() {
   const [courses, setCourses] = useState<CourseSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [tab, setTab] = useState(0)
 
   const loadCourses = useCallback(() => {
     setLoading(true)
@@ -59,7 +62,13 @@ export function CuratorDashboardPage() {
         </>
       }
     >
-      <CourseCreateSection onCreated={() => void loadCourses()} />
+      <Tabs value={tab} onChange={(_, value) => setTab(value)} sx={{ mb: 2 }}>
+        <Tab label="Створення курсу" />
+        <Tab label="Каталог курсів" />
+      </Tabs>
+      {tab === 0 ? <CourseCreateSection onCreated={() => void loadCourses()} /> : null}
+      {tab === 1 ? (
+        <>
 
       <Typography variant="h6" component="h2" gutterBottom sx={{ mt: 1 }}>
         Каталог програм
@@ -85,6 +94,7 @@ export function CuratorDashboardPage() {
             <TableHead>
               <TableRow>
                 <TableCell>ID</TableCell>
+                <TableCell>Орг.</TableCell>
                 <TableCell>Назва програми</TableCell>
                 <TableCell>Статус</TableCell>
                 <TableCell align="right">Дія</TableCell>
@@ -93,7 +103,7 @@ export function CuratorDashboardPage() {
             <TableBody>
               {courses.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4}>
+                  <TableCell colSpan={5}>
                     <Typography variant="body2" color="text.secondary">
                       Поки немає програм. Створіть першу у формі вище.
                     </Typography>
@@ -103,6 +113,7 @@ export function CuratorDashboardPage() {
                 courses.map((c) => (
                   <TableRow key={c.id} hover>
                     <TableCell>{c.id}</TableCell>
+                    <TableCell>{c.organizationId}</TableCell>
                     <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
                         {c.title}
@@ -112,6 +123,14 @@ export function CuratorDashboardPage() {
                       <CourseStatusChip status={c.status} />
                     </TableCell>
                     <TableCell align="right">
+                      <MuiLink
+                        component={RouterLink}
+                        to={`/curator/courses/${c.id}/edit`}
+                        variant="body2"
+                        sx={{ mr: 2, fontWeight: 600 }}
+                      >
+                        Редагувати
+                      </MuiLink>
                       <MuiLink
                         component={RouterLink}
                         to={`/curator/courses/${c.id}`}
@@ -133,6 +152,8 @@ export function CuratorDashboardPage() {
             </TableBody>
           </Table>
         </TableContainer>
+      ) : null}
+        </>
       ) : null}
     </PageShell>
   )

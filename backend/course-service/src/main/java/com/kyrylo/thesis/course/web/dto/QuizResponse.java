@@ -2,6 +2,8 @@ package com.kyrylo.thesis.course.web.dto;
 
 import java.util.List;
 
+import com.kyrylo.thesis.course.domain.QuestionType;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,6 +33,7 @@ public class QuizResponse {
         private Long id;
         private String text;
         private Integer sortOrder;
+        private QuestionType type;
         private List<OptionResponse> options;
     }
 

@@ -19,10 +19,11 @@ import {
   Typography,
 } from '@mui/material'
 import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded'
+import DOMPurify from 'dompurify'
 import { useEffect, useState } from 'react'
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom'
 import { PageShell } from '../../components/PageShell'
-import { deleteCourse, fetchCourseById, updateCourse } from '../../api/api'
+import { deleteCourse, enrichCourseWithEditorQuizzes, fetchCourseById, updateCourse } from '../../api/api'
 import type { Course, CourseStatus } from '../../types/course'
 import { courseToCreatePayload } from '../../utils/coursePayload'
 import { courseStatusUa } from '../../utils/labels'
@@ -66,7 +67,8 @@ export function CuratorCourseDetailPage() {
     setStatusBusy(true)
     setError(null)
     try {
-      const payload = courseToCreatePayload({ ...course, status: next })
+      const withQuizzes = await enrichCourseWithEditorQuizzes({ ...course, status: next })
+      const payload = courseToCreatePayload(withQuizzes)
       const updated = await updateCourse(course.id, payload)
       setCourse(updated)
     } catch (err: unknown) {
@@ -174,6 +176,14 @@ export function CuratorCourseDetailPage() {
                 </FormControl>
                 <Button
                   type="button"
+                  variant="contained"
+                  component={RouterLink}
+                  to={`/curator/courses/${course.id}/edit`}
+                >
+                  Редагувати
+                </Button>
+                <Button
+                  type="button"
                   variant="outlined"
                   color="error"
                   startIcon={<DeleteOutlineRounded />}
@@ -220,13 +230,10 @@ export function CuratorCourseDetailPage() {
                         >
                           {l.title}
                         </Typography>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}
-                        >
-                          {l.content}
-                        </Typography>
+                        <Box
+                          sx={{ color: 'text.secondary', lineHeight: 1.6 }}
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(l.content) }}
+                        />
                       </Box>
                     ))}
                   </Box>

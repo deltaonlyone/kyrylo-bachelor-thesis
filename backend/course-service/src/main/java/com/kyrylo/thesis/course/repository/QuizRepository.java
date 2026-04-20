@@ -15,9 +15,12 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
 
     /** Завантаження квізу з питаннями та варіантами відповідей. */
     @Query("""
-            SELECT q FROM Quiz q
+            SELECT DISTINCT q FROM Quiz q
+            JOIN FETCH q.lesson l
+            JOIN FETCH l.module m
+            JOIN FETCH m.course c
             LEFT JOIN FETCH q.questions quest
-            WHERE q.lesson.id = :lessonId
+            WHERE l.id = :lessonId
             """)
     Optional<Quiz> findByLessonIdWithQuestions(@Param("lessonId") Long lessonId);
 

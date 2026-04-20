@@ -1,5 +1,6 @@
 package com.kyrylo.thesis.user.web.dto;
 
+import com.kyrylo.thesis.user.domain.CuratorGlobalRole;
 import com.kyrylo.thesis.user.domain.UserRole;
 
 import lombok.Builder;
@@ -15,4 +16,5 @@ public class LoginResponse {
     private String firstName;
     private String lastName;
     private UserRole role;
+    private CuratorGlobalRole curatorGlobalRole;
 }

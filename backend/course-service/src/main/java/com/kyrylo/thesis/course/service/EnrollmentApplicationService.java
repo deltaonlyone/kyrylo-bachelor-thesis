@@ -11,6 +11,10 @@ import com.kyrylo.thesis.course.domain.Course;
 import com.kyrylo.thesis.course.domain.CourseStatus;
 import com.kyrylo.thesis.course.domain.Enrollment;
 import com.kyrylo.thesis.course.domain.EnrollmentStatus;
+import com.kyrylo.thesis.course.integration.UserDirectoryClient;
+import com.kyrylo.thesis.course.integration.userservice.MeContextDto;
+import com.kyrylo.thesis.course.integration.userservice.UserResponseDto;
+import com.kyrylo.thesis.course.integration.userservice.UserRole;
 import com.kyrylo.thesis.course.repository.CourseRepository;
 import com.kyrylo.thesis.course.repository.EnrollmentRepository;
 import com.kyrylo.thesis.course.web.dto.EnrollmentResponse;
@@ -24,6 +28,56 @@ public class EnrollmentApplicationService {
 
     private final EnrollmentRepository enrollmentRepository;
     private final CourseRepository courseRepository;
+    private final UserDirectoryClient userDirectoryClient;
+
+    /**
+     * Самозапис слухача на курс (userId з JWT).
+     */
+    @Transactional
+    public EnrollmentResponse enrollSelf(String authorizationHeader, Long courseId) {
+        MeContextDto ctx = userDirectoryClient.fetchMeContext(authorizationHeader);
+        if (ctx.getRole() != UserRole.LEARNER) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Запис на курс доступний лише слухачам");
+        }
+        return enroll(ctx.getUserId(), courseId);
+    }
+
+    /**
+     * Запис слухача викладачем організації курсу.
+     */
+    @Transactional
+    public EnrollmentResponse enrollLearnerByEducator(
+            String authorizationHeader,
+            Long courseId,
+            Long learnerUserId) {
+        MeContextDto ctx = userDirectoryClient.fetchMeContext(authorizationHeader);
+
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Курс не знайдено"));
+
+        if (course.getStatus() != CourseStatus.PUBLISHED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Курс має бути опублікований");
+        }
+
+        Long orgId = course.getOrganizationId();
+        boolean allowed = OrgAccess.isSuperCurator(ctx)
+                || (ctx.getRole() == UserRole.EDUCATOR && OrgAccess.educatorOrganizationIds(ctx).contains(orgId))
+                || (ctx.getRole() == UserRole.CURATOR && OrgAccess.curatorOrganizationIds(ctx).contains(orgId));
+
+
+        if (!allowed) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Немає прав записувати на цей курс");
+        }
+
+        UserResponseDto learner = userDirectoryClient.fetchUser(learnerUserId, authorizationHeader);
+        if (learner.getRole() != UserRole.LEARNER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Користувач має бути слухачем (LEARNER)");
+        }
+
+        userDirectoryClient.tryAddLearnerToOrganization(orgId, learnerUserId, authorizationHeader);
+
+        return enroll(learnerUserId, courseId);
+    }
 
     /**
      * Запис слухача на курс.
@@ -64,12 +118,23 @@ public class EnrollmentApplicationService {
                 .toList();
     }
 
-    /** Список студентів курсу з прогресом (для Educator). */
+    /** Список студентів курсу з прогресом (куратор / викладач організації). */
     @Transactional(readOnly = true)
-    public List<StudentProgressResponse> getStudentsByCourse(Long courseId) {
-        if (!courseRepository.existsById(courseId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Курс не знайдено");
+    public List<StudentProgressResponse> getStudentsByCourse(String authorizationHeader, Long courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Курс не знайдено"));
+
+        MeContextDto ctx = userDirectoryClient.fetchMeContext(authorizationHeader);
+        Long oid = course.getOrganizationId();
+
+        boolean ok = OrgAccess.isSuperCurator(ctx)
+                || (ctx.getRole() == UserRole.EDUCATOR && OrgAccess.educatorOrganizationIds(ctx).contains(oid))
+                || (ctx.getRole() == UserRole.CURATOR && OrgAccess.curatorOrganizationIds(ctx).contains(oid));
+
+        if (!ok) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
+
         return enrollmentRepository.findByCourseId(courseId).stream()
                 .map(e -> StudentProgressResponse.builder()
                         .enrollmentId(e.getId())

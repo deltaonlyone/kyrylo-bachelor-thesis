@@ -18,4 +18,6 @@ public class LessonResponse {
     /** Чи є тест (квіз) до цього уроку. */
     @Builder.Default
     private Boolean hasQuiz = false;
+
+    private QuizResponse quiz;
 }

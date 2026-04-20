@@ -42,7 +42,7 @@ public class AuthController {
         }
 
         String token = jwtTokenProvider.generateToken(
-                user.getId(), user.getEmail(), user.getRole());
+                user.getId(), user.getEmail(), user.getRole(), user.getCuratorGlobalRole());
 
         return LoginResponse.builder()
                 .token(token)
@@ -51,6 +51,7 @@ public class AuthController {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .role(user.getRole())
+                .curatorGlobalRole(user.getCuratorGlobalRole())
                 .build();
     }
 }

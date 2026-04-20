@@ -1,6 +1,5 @@
 import LogoutRounded from '@mui/icons-material/LogoutRounded'
 import AutoStoriesRounded from '@mui/icons-material/AutoStoriesRounded'
-import PersonRounded from '@mui/icons-material/PersonRounded'
 import {
   AppBar,
   Avatar,
@@ -21,11 +20,9 @@ import { Link as RouterLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { userRoleUa } from '../utils/labels'
 
-const MotionBox = motion.create(Box)
-
 export function AppShell() {
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { user, logout, meContext } = useAuth()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
@@ -45,11 +42,9 @@ export function AppShell() {
         <Container maxWidth="lg">
           <Toolbar disableGutters sx={{ gap: { xs: 1, sm: 2 }, py: 0.5 }}>
             {/* Логотип */}
-            <MotionBox
+            <Box
               component={RouterLink}
               to="/login"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -57,6 +52,9 @@ export function AppShell() {
                 textDecoration: 'none',
                 color: 'inherit',
                 mr: { xs: 0, sm: 1 },
+                transition: 'transform 0.2s ease',
+                '&:hover': { transform: 'scale(1.05)' },
+                '&:active': { transform: 'scale(0.95)' },
               }}
             >
               <Box
@@ -98,7 +96,32 @@ export function AppShell() {
                   </Typography>
                 </Box>
               )}
-            </MotionBox>
+            </Box>
+
+            {user?.role === 'CURATOR' ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 1 }}>
+                <Button
+                  component={RouterLink}
+                  to="/curator/dashboard"
+                  color="inherit"
+                  size="small"
+                  sx={{ fontWeight: 600 }}
+                >
+                  Кабінет
+                </Button>
+                {meContext?.superAdmin ? (
+                  <Button
+                    component={RouterLink}
+                    to="/curator/organizations"
+                    color="inherit"
+                    size="small"
+                    sx={{ fontWeight: 600 }}
+                  >
+                    Організації
+                  </Button>
+                ) : null}
+              </Box>
+            ) : null}
 
             {/* Spacer */}
             <Box sx={{ flex: 1 }} />
@@ -179,15 +202,16 @@ export function AppShell() {
       </AppBar>
 
       {/* Page content with fade-in */}
-      <MotionBox
-        component="main"
+      <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
-        sx={{ flex: 1, bgcolor: 'background.default' }}
+        style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
       >
-        <Outlet />
-      </MotionBox>
+        <Box component="main" sx={{ flex: 1, bgcolor: 'background.default' }}>
+          <Outlet />
+        </Box>
+      </motion.div>
 
       {/* Footer */}
       <Box

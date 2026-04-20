@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 public class CourseSummaryResponse {
 
     private Long id;
+    private Long organizationId;
     private String title;
     private CourseStatus status;
 }

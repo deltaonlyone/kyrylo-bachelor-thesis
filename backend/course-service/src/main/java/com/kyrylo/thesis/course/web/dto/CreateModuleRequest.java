@@ -11,6 +11,8 @@ import lombok.Data;
 @Data
 public class CreateModuleRequest {
 
+    private Long id;
+
     @NotBlank
     private String name;
 

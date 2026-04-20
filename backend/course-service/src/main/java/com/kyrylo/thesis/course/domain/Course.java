@@ -33,6 +33,10 @@ public class Course {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Відповідає organizations.id у user-service (узгоджено через сід). */
+    @Column(name = "organization_id", nullable = false)
+    private Long organizationId;
+
     @Column(nullable = false)
     private String title;
 

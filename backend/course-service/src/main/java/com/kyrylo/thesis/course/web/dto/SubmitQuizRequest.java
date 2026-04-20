@@ -23,7 +23,11 @@ public class SubmitQuizRequest {
     public static class AnswerEntry {
         @NotNull
         private Long questionId;
-        @NotNull
+
         private Long selectedOptionId;
+
+        private List<Long> selectedOptionIds;
+
+        private String textAnswer;
     }
 }

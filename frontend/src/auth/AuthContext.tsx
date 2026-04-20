@@ -7,10 +7,11 @@ import {
   useState,
 } from 'react'
 import type { ReactNode } from 'react'
+import type { CuratorGlobalRole } from '../types/user'
+import type { MeContext } from '../types/org'
 import type { UserRole } from '../types/user'
+import { fetchMeContext } from '../api/api'
 import { apiClient } from '../api/apiClient'
-
-/* ─── Типи ─────────────────────────────────────────────── */
 
 interface AuthUser {
   userId: number
@@ -18,29 +19,24 @@ interface AuthUser {
   firstName: string
   lastName: string
   role: UserRole
+  curatorGlobalRole?: CuratorGlobalRole
 }
 
 interface AuthContextValue {
-  /** JWT-токен або null, якщо не автентифікований */
   token: string | null
-  /** Дані поточного користувача */
   user: AuthUser | null
-  /** Виконати логін; кидає помилку при невдалій спробі */
+  /** Контекст організацій з user-service після логіну та при refreshMeContext */
+  meContext: MeContext | null
   login: (email: string, password: string) => Promise<void>
-  /** Вийти з системи */
   logout: () => void
-  /** Чи ідентифіковано токен (не null) */
+  refreshMeContext: () => Promise<void>
   isAuthenticated: boolean
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-/* ─── Local Storage Keys ───────────────────────────────── */
-
 const LS_TOKEN = 'thesis-auth-token'
 const LS_USER = 'thesis-auth-user'
-
-/* ─── Допоміжні ────────────────────────────────────────── */
 
 function loadToken(): string | null {
   return localStorage.getItem(LS_TOKEN)
@@ -56,20 +52,41 @@ function loadUser(): AuthUser | null {
   }
 }
 
-/* ─── Provider ─────────────────────────────────────────── */
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(loadToken)
   const [user, setUser] = useState<AuthUser | null>(loadUser)
+  const [meContext, setMeContext] = useState<MeContext | null>(null)
 
-  /* Синхронізуємо заголовок Authorization при зміні токена */
   useEffect(() => {
     if (token) {
-      apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      apiClient.defaults.headers.common.Authorization = `Bearer ${token}`
     } else {
-      delete apiClient.defaults.headers.common['Authorization']
+      delete apiClient.defaults.headers.common.Authorization
     }
   }, [token])
+
+  const refreshMeContext = useCallback(async () => {
+    const t = localStorage.getItem(LS_TOKEN)
+    if (!t) {
+      setMeContext(null)
+      return
+    }
+    apiClient.defaults.headers.common.Authorization = `Bearer ${t}`
+    try {
+      const ctx = await fetchMeContext()
+      setMeContext(ctx)
+    } catch {
+      setMeContext(null)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (token) {
+      void refreshMeContext()
+    } else {
+      setMeContext(null)
+    }
+  }, [token, refreshMeContext])
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await apiClient.post<{
@@ -79,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       firstName: string
       lastName: string
       role: UserRole
+      curatorGlobalRole?: CuratorGlobalRole
     }>('/auth/login', { email, password })
 
     const { token: jwt, userId, firstName, lastName, role } = res.data
@@ -88,36 +106,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       firstName,
       lastName,
       role,
+      curatorGlobalRole: res.data.curatorGlobalRole,
     }
 
     localStorage.setItem(LS_TOKEN, jwt)
     localStorage.setItem(LS_USER, JSON.stringify(authUser))
+    apiClient.defaults.headers.common.Authorization = `Bearer ${jwt}`
     setToken(jwt)
     setUser(authUser)
+
+    try {
+      const ctx = await fetchMeContext()
+      setMeContext(ctx)
+    } catch {
+      setMeContext(null)
+    }
   }, [])
 
   const logout = useCallback(() => {
     localStorage.removeItem(LS_TOKEN)
     localStorage.removeItem(LS_USER)
+    delete apiClient.defaults.headers.common.Authorization
     setToken(null)
     setUser(null)
+    setMeContext(null)
   }, [])
 
   const value = useMemo<AuthContextValue>(
     () => ({
       token,
       user,
+      meContext,
       login,
       logout,
+      refreshMeContext,
       isAuthenticated: token !== null,
     }),
-    [token, user, login, logout],
+    [token, user, meContext, login, logout, refreshMeContext],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
-
-/* ─── Hook ─────────────────────────────────────────────── */
 
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext)

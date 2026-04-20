@@ -1,5 +1,7 @@
 package com.kyrylo.thesis.course.web.dto;
 
+import com.kyrylo.thesis.course.domain.QuizAttemptStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,4 +23,5 @@ public class QuizResultResponse {
     private Integer scorePercentage;
     private Integer passingScore;
     private Boolean passed;
+    private QuizAttemptStatus status;
 }
