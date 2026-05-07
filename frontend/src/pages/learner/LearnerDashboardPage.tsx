@@ -21,6 +21,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import { CourseStatusChip } from '../../components/CourseStatusChip'
 import { PageShell } from '../../components/PageShell'
+import { SkillMatrixCard } from '../../components/SkillMatrixCard'
 import { enrollInCourse, fetchCourses, fetchMyEnrollments } from '../../api/api'
 import { useAuth } from '../../auth/AuthContext'
 import type { CourseSummary, Enrollment } from '../../types/course'
@@ -102,7 +103,9 @@ export function LearnerDashboardPage() {
       )}
 
       {!loading && !error && (
-        courses.length === 0 ? (
+        <>
+          <SkillMatrixCard />
+          {courses.length === 0 ? (
           <Alert severity="info" icon={<SchoolRounded />} sx={{ mt: 2 }}>
             Зараз немає опублікованих програм. Після публікації куратором вони
             з'являться тут автоматично.
@@ -216,7 +219,8 @@ export function LearnerDashboardPage() {
               )
             })}
           </Grid>
-        )
+          )}
+        </>
       )}
     </PageShell>
   )

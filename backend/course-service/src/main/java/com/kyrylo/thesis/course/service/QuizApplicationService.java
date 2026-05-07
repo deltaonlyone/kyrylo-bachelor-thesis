@@ -14,6 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.kyrylo.thesis.course.domain.AnswerOption;
+import com.kyrylo.thesis.course.domain.Course;
+import com.kyrylo.thesis.course.domain.CourseModule;
+import com.kyrylo.thesis.course.domain.EnrollmentStatus;
+import com.kyrylo.thesis.course.domain.Lesson;
 import com.kyrylo.thesis.course.domain.Question;
 import com.kyrylo.thesis.course.domain.QuestionType;
 import com.kyrylo.thesis.course.domain.Quiz;
@@ -23,6 +27,7 @@ import com.kyrylo.thesis.course.domain.QuizAttemptStatus;
 import com.kyrylo.thesis.course.integration.UserDirectoryClient;
 import com.kyrylo.thesis.course.integration.userservice.MeContextDto;
 import com.kyrylo.thesis.course.integration.userservice.UserRole;
+import com.kyrylo.thesis.course.repository.EnrollmentRepository;
 import com.kyrylo.thesis.course.repository.QuizAttemptRepository;
 import com.kyrylo.thesis.course.repository.QuizRepository;
 import com.kyrylo.thesis.course.web.dto.PendingQuizAttemptResponse;
@@ -36,12 +41,16 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class QuizApplicationService {
 
     private final QuizRepository quizRepository;
     private final QuizAttemptRepository quizAttemptRepository;
     private final CourseApplicationService courseApplicationService;
     private final UserDirectoryClient userDirectoryClient;
+    private final EnrollmentRepository enrollmentRepository;
+    private final SkillApplicationService skillApplicationService;
+    private final EnrollmentApplicationService enrollmentApplicationService;
 
     /**
      * Отримати квіз для уроку (без позначок правильних відповідей).
@@ -159,6 +168,11 @@ public class QuizApplicationService {
 
         QuizAttempt saved = quizAttemptRepository.save(attempt);
 
+        // Оновити прогрес і, при завершенні, нарахувати навички
+        if (passed) {
+            updateEnrollmentProgress(userId, quiz);
+        }
+
         return QuizResultResponse.builder()
                 .attemptId(saved.getId())
                 .quizId(quiz.getId())
@@ -266,6 +280,11 @@ public class QuizApplicationService {
         attempt.setStatus(QuizAttemptStatus.REVIEWED);
         quizAttemptRepository.save(attempt);
 
+        // Оновити прогрес після рецензії
+        if (passed) {
+            updateEnrollmentProgress(attempt.getUserId(), attempt.getQuiz());
+        }
+
         return QuizResultResponse.builder()
                 .attemptId(attempt.getId())
                 .quizId(attempt.getQuiz().getId())
@@ -323,5 +342,16 @@ public class QuizApplicationService {
                                 .build())
                         .toList())
                 .build();
+    }
+
+    /* ─── Прогрес та нарахування навичок ────────────────────────── */
+
+    /**
+     * Перерахувати прогрес проходження курсу на основі пройдених квізів.
+     * Якщо всі квізи пройдені — enrollment.status = COMPLETED + нарахування навичок.
+     */
+    private void updateEnrollmentProgress(Long userId, Quiz quiz) {
+        Course course = quiz.getLesson().getModule().getCourse();
+        enrollmentApplicationService.recalculateProgress(userId, course);
     }
 }

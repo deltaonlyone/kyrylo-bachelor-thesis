@@ -19,6 +19,9 @@ public class StudentProgressResponse {
 
     private Long enrollmentId;
     private Long userId;
+    private String firstName;
+    private String lastName;
+    private String email;
     private EnrollmentStatus status;
     private Integer progressPercentage;
 }

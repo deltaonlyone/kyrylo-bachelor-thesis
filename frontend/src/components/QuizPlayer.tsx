@@ -33,9 +33,10 @@ const MotionPaper = motion.create(Paper)
 interface QuizPlayerProps {
   lessonId: number
   lessonTitle: string
+  onQuizPassed?: () => void
 }
 
-export function QuizPlayer({ lessonId, lessonTitle }: QuizPlayerProps) {
+export function QuizPlayer({ lessonId, lessonTitle, onQuizPassed }: QuizPlayerProps) {
   const { user } = useAuth()
   const theme = useTheme()
   const [quiz, setQuiz] = useState<Quiz | null>(null)
@@ -113,7 +114,9 @@ export function QuizPlayer({ lessonId, lessonTitle }: QuizPlayerProps) {
           textAnswer: typeof optId === 'string' ? optId : undefined,
         })),
       }
-      setResult(await submitQuiz(payload))
+      const res = await submitQuiz(payload)
+      setResult(res)
+      if (res.passed && onQuizPassed) onQuizPassed()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Помилка відправки')
     } finally {
@@ -284,7 +287,7 @@ export function QuizPlayer({ lessonId, lessonTitle }: QuizPlayerProps) {
                       <Card
                         key={opt.id}
                         variant="outlined"
-                        sx={{ mb: 1.5, borderColor: selected ? 'primary.main' : alpha('#fff', 0.06) }}
+                        sx={{ mb: 1.5, borderColor: selected ? 'primary.main' : 'divider' }}
                         onClick={() => pickMulti(q.id, opt.id)}
                       >
                         <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
@@ -312,7 +315,7 @@ export function QuizPlayer({ lessonId, lessonTitle }: QuizPlayerProps) {
                     mb: 1.5,
                     cursor: 'pointer',
                     transition: 'all .2s',
-                    borderColor: answers[q.id] === opt.id ? 'primary.main' : alpha('#fff', 0.06),
+                    borderColor: answers[q.id] === opt.id ? 'primary.main' : 'divider',
                     bgcolor: answers[q.id] === opt.id ? alpha(theme.palette.primary.main, 0.06) : 'transparent',
                     '&:hover': {
                       borderColor: alpha(theme.palette.primary.main, 0.4),

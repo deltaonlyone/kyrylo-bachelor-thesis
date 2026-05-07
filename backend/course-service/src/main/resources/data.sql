@@ -187,3 +187,36 @@ ALTER TABLE lessons ALTER COLUMN id RESTART WITH 6;
 ALTER TABLE quizzes ALTER COLUMN id RESTART WITH 3;
 ALTER TABLE questions ALTER COLUMN id RESTART WITH 6;
 ALTER TABLE answer_options ALTER COLUMN id RESTART WITH 21;
+
+-- ─── Довідник навичок (Skills) ──────────────────────────────────
+INSERT INTO skills (id, name, category) VALUES (1, 'Docker', 'DEVOPS');
+INSERT INTO skills (id, name, category) VALUES (2, 'Kubernetes', 'DEVOPS');
+INSERT INTO skills (id, name, category) VALUES (3, 'CI/CD', 'DEVOPS');
+INSERT INTO skills (id, name, category) VALUES (4, 'AWS', 'CLOUD');
+INSERT INTO skills (id, name, category) VALUES (5, 'GCP', 'CLOUD');
+INSERT INTO skills (id, name, category) VALUES (6, 'Azure', 'CLOUD');
+INSERT INTO skills (id, name, category) VALUES (7, 'Java', 'BACKEND');
+INSERT INTO skills (id, name, category) VALUES (8, 'Spring', 'BACKEND');
+INSERT INTO skills (id, name, category) VALUES (9, 'SQL', 'DATA');
+INSERT INTO skills (id, name, category) VALUES (10, 'React', 'FRONTEND');
+INSERT INTO skills (id, name, category) VALUES (11, 'JavaScript', 'FRONTEND');
+INSERT INTO skills (id, name, category) VALUES (12, 'TypeScript', 'FRONTEND');
+INSERT INTO skills (id, name, category) VALUES (13, 'Git', 'DEVOPS');
+INSERT INTO skills (id, name, category) VALUES (14, 'System Design', 'BACKEND');
+INSERT INTO skills (id, name, category) VALUES (15, 'Agile', 'SOFT_SKILLS');
+INSERT INTO skills (id, name, category) VALUES (16, 'Linux', 'DEVOPS');
+
+ALTER TABLE skills ALTER COLUMN id RESTART WITH 17;
+
+-- ─── Навички курсів (CourseSkills) ──────────────────────────────
+-- Курс 1: DevOps для ІТ-команд → Docker (JUNIOR), CI/CD (JUNIOR), Kubernetes (TRAINEE)
+INSERT INTO course_skills (id, course_id, skill_id, skill_level) VALUES (1, 1, 1, 'JUNIOR');
+INSERT INTO course_skills (id, course_id, skill_id, skill_level) VALUES (2, 1, 3, 'JUNIOR');
+INSERT INTO course_skills (id, course_id, skill_id, skill_level) VALUES (3, 1, 2, 'TRAINEE');
+
+-- Курс 2: Хмарні технології → AWS (TRAINEE), GCP (TRAINEE), Azure (TRAINEE)
+INSERT INTO course_skills (id, course_id, skill_id, skill_level) VALUES (4, 2, 4, 'TRAINEE');
+INSERT INTO course_skills (id, course_id, skill_id, skill_level) VALUES (5, 2, 5, 'TRAINEE');
+INSERT INTO course_skills (id, course_id, skill_id, skill_level) VALUES (6, 2, 6, 'TRAINEE');
+
+ALTER TABLE course_skills ALTER COLUMN id RESTART WITH 7;

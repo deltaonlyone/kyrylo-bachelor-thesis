@@ -1,17 +1,27 @@
 import type {
   Course,
   CourseSummary,
+  CourseProgress,
+  CourseSkill,
+  CourseSkillRequest,
   CreateCourseRequest,
   Enrollment,
   PendingQuizAttempt,
   Quiz,
   QuizResult,
   ReviewQuizAttemptRequest,
+  Skill,
+  SkillCategory,
   StudentProgress,
   SubmitQuizPayload,
+  UserSkill,
+  TaskSubmission,
+  PendingTaskSubmission,
+  SubmitTaskPayload,
+  ReviewTaskPayload,
 } from '../types/course'
 import type { MeContext, OrganizationMemberRow, OrganizationSummary } from '../types/org'
-import type { User, UserRole } from '../types/user'
+import type { User, UserRole, UpdateUserRequest } from '../types/user'
 import type { CuratorOrgRole } from '../types/org'
 import { apiClient } from './apiClient'
 
@@ -98,6 +108,14 @@ export async function updateCuratorOrgRole(
   })
 }
 
+/** DELETE /api/organizations/{id}/members/{userId} — видалити учасника з організації */
+export async function removeOrganizationMember(
+  organizationId: number,
+  userId: number,
+): Promise<void> {
+  await apiClient.delete(`/api/organizations/${organizationId}/members/${userId}`)
+}
+
 /** GET /api/courses — список курсів (CourseSummaryResponse[]) */
 export async function fetchCourses(): Promise<CourseSummary[]> {
   const res = await apiClient.get<CourseSummary[]>('/api/courses')
@@ -171,6 +189,17 @@ export async function enrollLearnerOnCourse(
 /** GET /api/enrollments/my — усі записи поточного слухача */
 export async function fetchMyEnrollments(): Promise<Enrollment[]> {
   const res = await apiClient.get<Enrollment[]>('/api/enrollments/my')
+  return res.data
+}
+
+/** DELETE /api/enrollments/{courseId}/learners/{userId} — відрахування слухача */
+export async function unenrollLearner(courseId: number, userId: number): Promise<void> {
+  await apiClient.delete(`/api/enrollments/${courseId}/learners/${userId}`)
+}
+
+/** GET /api/enrollments/{courseId}/progress — детальний прогрес слухача по курсу */
+export async function fetchCourseProgress(courseId: number): Promise<CourseProgress> {
+  const res = await apiClient.get<CourseProgress>(`/api/enrollments/${courseId}/progress`)
   return res.data
 }
 
@@ -249,4 +278,85 @@ export async function uploadMedia(file: File): Promise<{ mediaId: string; url: s
   const path = res.data.url.startsWith('/') ? res.data.url : `/${res.data.url}`
   const url = `${base}${path}`
   return { ...res.data, url }
+}
+
+/* ─── Practical Tasks ───────────────────────────────────── */
+
+export async function submitPracticalTask(taskId: number, payload: SubmitTaskPayload): Promise<TaskSubmission> {
+  const res = await apiClient.post<TaskSubmission>(`/api/tasks/${taskId}/submit`, payload)
+  return res.data
+}
+
+export async function fetchPendingTaskSubmissions(): Promise<PendingTaskSubmission[]> {
+  const res = await apiClient.get<PendingTaskSubmission[]>('/api/tasks/submissions/pending')
+  return res.data
+}
+
+export async function reviewTaskSubmission(
+  submissionId: number,
+  body: ReviewTaskPayload,
+): Promise<TaskSubmission> {
+  const res = await apiClient.post<TaskSubmission>(
+    `/api/tasks/submissions/${submissionId}/review`,
+    body,
+  )
+  return res.data
+}
+
+export async function fetchMyTaskSubmission(taskId: number): Promise<TaskSubmission | null> {
+  const res = await apiClient.get<TaskSubmission | null>(`/api/tasks/${taskId}/my-submission`)
+  return res.data || null
+}
+
+/* ─── Skills / Competency Matrix ──────────────────────── */
+
+/** GET /api/skills — список всіх навичок з довідника */
+export async function fetchSkills(): Promise<Skill[]> {
+  const res = await apiClient.get<Skill[]>('/api/skills')
+  return res.data
+}
+
+/** POST /api/skills — створити нову навичку (Curator) */
+export async function createSkill(name: string, category: SkillCategory): Promise<Skill> {
+  const res = await apiClient.post<Skill>('/api/skills', { name, category })
+  return res.data
+}
+
+/** GET /api/skills/course/{courseId} — навички, які дає курс */
+export async function fetchCourseSkills(courseId: number): Promise<CourseSkill[]> {
+  const res = await apiClient.get<CourseSkill[]>(`/api/skills/course/${courseId}`)
+  return res.data
+}
+
+/** PUT /api/skills/course/{courseId} — оновити навички курсу (Curator) */
+export async function updateCourseSkills(
+  courseId: number,
+  skills: CourseSkillRequest[],
+): Promise<CourseSkill[]> {
+  const res = await apiClient.put<CourseSkill[]>(`/api/skills/course/${courseId}`, skills)
+  return res.data
+}
+
+/** GET /api/skills/my — мої навички (з JWT) */
+export async function fetchMySkills(): Promise<UserSkill[]> {
+  const res = await apiClient.get<UserSkill[]>('/api/skills/my')
+  return res.data
+}
+
+/** GET /api/skills/user/{userId} — навички конкретного працівника */
+export async function fetchUserSkills(userId: number): Promise<UserSkill[]> {
+  const res = await apiClient.get<UserSkill[]>(`/api/skills/user/${userId}`)
+  return res.data
+}
+
+/** GET /api/users/{id} — отримати користувача */
+export async function fetchUserById(userId: number): Promise<User> {
+  const res = await apiClient.get<User>(`/api/users/${userId}`)
+  return res.data
+}
+
+/** PUT /api/users/{id} — оновити користувача (супер-адмін) */
+export async function updateUser(userId: number, payload: UpdateUserRequest): Promise<User> {
+  const res = await apiClient.put<User>(`/api/users/${userId}`, payload)
+  return res.data
 }

@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import jakarta.annotation.PostConstruct;
 
 @Service
+@SuppressWarnings("null")
 public class MediaStorageService {
 
     @Value("${app.media.dir:./uploads}")

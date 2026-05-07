@@ -10,6 +10,7 @@ import { CuratorCourseEditPage } from './pages/curator/CuratorCourseEditPage'
 import { SuperAdminOrganizationsPage } from './pages/curator/SuperAdminOrganizationsPage'
 import { OrganizationDetailPage } from './pages/curator/OrganizationDetailPage'
 import { EducatorDashboardPage } from './pages/educator/EducatorDashboardPage'
+import { EducatorCourseDetailPage } from './pages/educator/EducatorCourseDetailPage'
 import { LearnerDashboardPage } from './pages/learner/LearnerDashboardPage'
 import { LearnerCoursePage } from './pages/learner/LearnerCoursePage'
 import './App.css'
@@ -52,6 +53,7 @@ export default function App() {
         <Route element={<ProtectedRoute allowedRoles={['EDUCATOR']} />}>
           <Route element={<AppShell />}>
             <Route path="/educator/dashboard" element={<EducatorDashboardPage />} />
+            <Route path="/educator/courses/:courseId" element={<EducatorCourseDetailPage />} />
           </Route>
         </Route>
 

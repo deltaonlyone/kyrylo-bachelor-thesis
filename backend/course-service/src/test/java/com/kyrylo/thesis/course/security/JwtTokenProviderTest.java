@@ -16,6 +16,7 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.Jwts;
 import java.util.Date;
 
+@SuppressWarnings("deprecation")
 class JwtTokenProviderTest {
 
     @Test

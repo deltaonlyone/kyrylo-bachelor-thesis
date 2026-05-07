@@ -24,6 +24,8 @@ import {
 } from '@mui/material'
 import EditRounded from '@mui/icons-material/EditRounded'
 import PersonAddRounded from '@mui/icons-material/PersonAddRounded'
+import PersonRemoveRounded from '@mui/icons-material/PersonRemoveRounded'
+import ManageAccountsRounded from '@mui/icons-material/ManageAccountsRounded'
 import PostAddRounded from '@mui/icons-material/PostAddRounded'
 import CloseRounded from '@mui/icons-material/CloseRounded'
 import { useCallback, useEffect, useState } from 'react'
@@ -35,7 +37,10 @@ import {
   fetchCourses,
   fetchOrganizationMembers,
   fetchUsersByRole,
+  fetchUserById,
+  updateUser,
   inviteCuratorToOrganization,
+  removeOrganizationMember,
   renameOrganization,
   updateCuratorOrgRole,
 } from '../../api/api'
@@ -44,7 +49,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { PageShell } from '../../components/PageShell'
 import type { CuratorOrgRole, OrganizationMemberRow } from '../../types/org'
 import type { CourseSummary, CreateCourseRequest } from '../../types/course'
-import type { User, UserRole } from '../../types/user'
+import type { User, UserRole, UpdateUserRequest, CuratorGlobalRole } from '../../types/user'
 
 export function OrganizationDetailPage() {
   const { orgId } = useParams<{ orgId: string }>()
@@ -68,6 +73,15 @@ export function OrganizationDetailPage() {
   const [addMemberSelected, setAddMemberSelected] = useState<number | ''>('')
 
   const [createCourseOpen, setCreateCourseOpen] = useState(false)
+
+  const [editUserOpen, setEditUserOpen] = useState<number | null>(null)
+  const [editUserPayload, setEditUserPayload] = useState<UpdateUserRequest>({
+    email: '',
+    firstName: '',
+    lastName: '',
+    role: 'LEARNER',
+    password: '',
+  })
 
   useEffect(() => {
     if (meContext) {
@@ -171,6 +185,44 @@ export function OrganizationDetailPage() {
     }
   }
 
+  async function handleRemoveMember(userId: number, name: string) {
+    if (!window.confirm(`Видалити ${name} з організації?`)) return
+    try {
+      await removeOrganizationMember(id, userId)
+      load()
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Помилка видалення учасника')
+    }
+  }
+
+  async function handleOpenEditUser(userId: number) {
+    try {
+      const u = await fetchUserById(userId)
+      setEditUserPayload({
+        email: u.email,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        role: u.role,
+        curatorGlobalRole: u.curatorGlobalRole ?? 'NONE',
+        password: '',
+      })
+      setEditUserOpen(userId)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Помилка завантаження користувача')
+    }
+  }
+
+  async function handleSaveEditUser() {
+    if (!editUserOpen) return
+    try {
+      await updateUser(editUserOpen, editUserPayload)
+      setEditUserOpen(null)
+      load()
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Помилка оновлення користувача')
+    }
+  }
+
   return (
     <PageShell
       title={
@@ -215,6 +267,7 @@ export function OrganizationDetailPage() {
               <TableCell>Глобальна роль</TableCell>
               <TableCell>У організації</TableCell>
               <TableCell>Підроль куратора</TableCell>
+              <TableCell align="right">Дії</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -242,6 +295,26 @@ export function OrganizationDetailPage() {
                   ) : (
                     '—'
                   )}
+                </TableCell>
+                <TableCell align="right">
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={() => void handleOpenEditUser(m.userId)}
+                      title="Редагувати користувача"
+                    >
+                      <ManageAccountsRounded fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => void handleRemoveMember(m.userId, `${m.firstName} ${m.lastName}`)}
+                      title="Видалити з організації"
+                    >
+                      <PersonRemoveRounded fontSize="small" />
+                    </IconButton>
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}
@@ -357,6 +430,40 @@ export function OrganizationDetailPage() {
             onSubmitCourse={handleCreateCourse}
           />
         </DialogContent>
+      </Dialog>
+
+      {/* Редагування користувача */}
+      <Dialog open={editUserOpen !== null} onClose={() => setEditUserOpen(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Редагувати користувача</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'grid', gap: 2, mt: 1 }}>
+            <TextField label="Email" type="email" fullWidth size="small" value={editUserPayload.email} onChange={(e) => setEditUserPayload(p => ({ ...p, email: e.target.value }))} />
+            <TextField label="Ім'я" fullWidth size="small" value={editUserPayload.firstName} onChange={(e) => setEditUserPayload(p => ({ ...p, firstName: e.target.value }))} />
+            <TextField label="Прізвище" fullWidth size="small" value={editUserPayload.lastName} onChange={(e) => setEditUserPayload(p => ({ ...p, lastName: e.target.value }))} />
+            <FormControl fullWidth size="small">
+              <InputLabel>Глобальна роль</InputLabel>
+              <Select value={editUserPayload.role} label="Глобальна роль" onChange={(e) => setEditUserPayload(p => ({ ...p, role: e.target.value as UserRole }))}>
+                <MenuItem value="LEARNER">Слухач (LEARNER)</MenuItem>
+                <MenuItem value="EDUCATOR">Викладач (EDUCATOR)</MenuItem>
+                <MenuItem value="CURATOR">Куратор (CURATOR)</MenuItem>
+              </Select>
+            </FormControl>
+            {editUserPayload.role === 'CURATOR' && (
+              <FormControl fullWidth size="small">
+                <InputLabel>Підроль куратора</InputLabel>
+                <Select value={editUserPayload.curatorGlobalRole ?? 'NONE'} label="Підроль куратора" onChange={(e) => setEditUserPayload(p => ({ ...p, curatorGlobalRole: e.target.value as CuratorGlobalRole }))}>
+                  <MenuItem value="NONE">Без додаткових прав</MenuItem>
+                  <MenuItem value="SUPER_ADMIN">Супер-адміністратор</MenuItem>
+                </Select>
+              </FormControl>
+            )}
+            <TextField label="Новий пароль (необов'язково)" type="password" fullWidth size="small" value={editUserPayload.password} onChange={(e) => setEditUserPayload(p => ({ ...p, password: e.target.value }))} />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditUserOpen(null)}>Скасувати</Button>
+          <Button onClick={() => void handleSaveEditUser()} variant="contained">Зберегти</Button>
+        </DialogActions>
       </Dialog>
 
     </PageShell>

@@ -8,11 +8,18 @@ spring:
           "[/**]":
             allowedOriginPatterns:
               - "*"
-            allowedMethods: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
             allowedHeaders: "*"
             allowCredentials: true
+            maxAge: 3600
       default-filters:
-        - RemoveRequestHeader=Origin
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
 
       routes:
         - id: auth-service
@@ -26,7 +33,7 @@ spring:
         - id: course-service
           uri: http://localhost:8083
           predicates:
-            - Path=/api/courses/**,/api/enrollments/**,/api/quizzes/**,/api/media/**
+            - Path=/api/courses/**,/api/enrollments/**,/api/quizzes/**,/api/media/**,/api/skills/**,/api/tasks/**
         - id: core-service
           uri: http://localhost:8081
           predicates:

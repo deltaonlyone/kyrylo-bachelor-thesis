@@ -23,8 +23,10 @@ import DOMPurify from 'dompurify'
 import { useEffect, useState } from 'react'
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom'
 import { PageShell } from '../../components/PageShell'
-import { deleteCourse, enrichCourseWithEditorQuizzes, fetchCourseById, updateCourse } from '../../api/api'
-import type { Course, CourseStatus } from '../../types/course'
+import { SkillChip } from '../../components/SkillChip'
+import { CourseSkillsEditor } from '../../components/CourseSkillsEditor'
+import { deleteCourse, enrichCourseWithEditorQuizzes, fetchCourseById, fetchCourseSkills, updateCourse } from '../../api/api'
+import type { Course, CourseSkill, CourseStatus } from '../../types/course'
 import { courseToCreatePayload } from '../../utils/coursePayload'
 import { courseStatusUa } from '../../utils/labels'
 
@@ -36,6 +38,7 @@ export function CuratorCourseDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [statusBusy, setStatusBusy] = useState(false)
+  const [courseSkills, setCourseSkills] = useState<CourseSkill[]>([])
 
   useEffect(() => {
     if (!Number.isFinite(id) || id <= 0) {
@@ -57,6 +60,11 @@ export function CuratorCourseDetailPage() {
       .finally(() => {
         if (!cancelled) setLoading(false)
       })
+    fetchCourseSkills(id)
+      .then((data) => {
+        if (!cancelled) setCourseSkills(data)
+      })
+      .catch(() => {})
     return () => {
       cancelled = true
     }
@@ -201,6 +209,23 @@ export function CuratorCourseDetailPage() {
               з повною структурою (вимога бекенду).
             </Typography>
           </Paper>
+
+          {courseSkills.length > 0 && (
+            <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
+              <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 700 }}>
+                Компетенції, що присвоюються
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {courseSkills.map((s) => (
+                  <SkillChip key={s.skillId} skillName={s.skillName} skillLevel={s.skillLevel} />
+                ))}
+              </Box>
+            </Paper>
+          )}
+
+          <Box sx={{ mb: 3 }}>
+            <CourseSkillsEditor courseId={course.id} />
+          </Box>
 
           <Typography variant="h6" component="h2" gutterBottom>
             Структура програми

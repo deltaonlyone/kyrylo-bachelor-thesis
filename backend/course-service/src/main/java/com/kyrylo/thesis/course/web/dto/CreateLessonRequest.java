@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 public class CreateLessonRequest {
 
-    private Long id;
+    private Long id; // optional (for update)
 
     @NotBlank
     private String title;
@@ -15,6 +15,10 @@ public class CreateLessonRequest {
     @NotBlank
     private String content;
 
+    // Вкладені сутності (опціонально)
     @Valid
     private CreateQuizRequest quiz;
+    
+    @Valid
+    private CreatePracticalTaskRequest practicalTask;
 }

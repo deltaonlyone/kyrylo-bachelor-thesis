@@ -2,7 +2,6 @@ package com.kyrylo.thesis.user.web;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.mockito.ArgumentMatchers.*;
 
 import java.util.Optional;
 

@@ -75,8 +75,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const ctx = await fetchMeContext()
       setMeContext(ctx)
-    } catch {
+    } catch (err: any) {
       setMeContext(null)
+      // Якщо токен недійсний/прострочений, очистимо його
+      if (err?.response?.status === 401 || err?.response?.status === 403) {
+        localStorage.removeItem(LS_TOKEN)
+        localStorage.removeItem(LS_USER)
+        delete apiClient.defaults.headers.common.Authorization
+        setToken(null)
+        setUser(null)
+      }
     }
   }, [])
 
@@ -118,8 +126,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const ctx = await fetchMeContext()
       setMeContext(ctx)
-    } catch {
+    } catch (err: any) {
       setMeContext(null)
+      if (err?.response?.status === 401 || err?.response?.status === 403) {
+        localStorage.removeItem(LS_TOKEN)
+        localStorage.removeItem(LS_USER)
+        delete apiClient.defaults.headers.common.Authorization
+        setToken(null)
+        setUser(null)
+      }
     }
   }, [])
 

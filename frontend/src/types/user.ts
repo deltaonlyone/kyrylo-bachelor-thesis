@@ -17,3 +17,12 @@ export interface User {
   role: UserRole
   curatorGlobalRole?: CuratorGlobalRole
 }
+
+export interface UpdateUserRequest {
+  email: string
+  firstName: string
+  lastName: string
+  role: UserRole
+  curatorGlobalRole?: CuratorGlobalRole
+  password?: string
+}

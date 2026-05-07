@@ -35,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class OrganizationApplicationService {
 
     private final OrganizationRepository organizationRepository;
@@ -274,6 +275,30 @@ public class OrganizationApplicationService {
         }
 
         member.setCuratorOrgRole(request.getCuratorOrgRole());
+    }
+
+    /**
+     * Видалити учасника з організації (супер-адмін або ORG_ADMIN).
+     */
+    @Transactional
+    public void removeMember(SecurityUserPrincipal actor, Long organizationId, Long targetUserId) {
+        User actorUser = requireUser(actor.userId());
+
+        if (!isSuperAdmin(actorUser)) {
+            OrganizationMember actorMember = organizationMemberRepository
+                    .findByOrganizationIdAndUserId(organizationId, actorUser.getId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
+            if (actorMember.getMemberKind() != OrganizationMemberKind.CURATOR
+                    || actorMember.getCuratorOrgRole() != CuratorOrgRole.ORG_ADMIN) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Лише супер-адмін або адмін організації");
+            }
+        }
+
+        OrganizationMember member = organizationMemberRepository
+                .findByOrganizationIdAndUserId(organizationId, targetUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Учасника не знайдено"));
+
+        organizationMemberRepository.delete(member);
     }
 
     /* ─── helpers ─── */

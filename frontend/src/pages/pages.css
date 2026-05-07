@@ -62,27 +62,23 @@
   margin-bottom: 1rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  .page__success {
+[data-mui-color-scheme="dark"] .page__success {
     color: #86efac;
     background: rgba(34, 197, 94, 0.12);
     border-color: rgba(34, 197, 94, 0.35);
   }
 
-  .page__warn {
+[data-mui-color-scheme="dark"] .page__warn {
     color: #fcd34d;
     background: rgba(251, 191, 36, 0.1);
     border-color: rgba(251, 191, 36, 0.35);
   }
-}
 
-@media (prefers-color-scheme: dark) {
-  .page__error {
+[data-mui-color-scheme="dark"] .page__error {
     color: #fca5a5;
     background: rgba(248, 113, 113, 0.1);
     border-color: rgba(248, 113, 113, 0.3);
   }
-}
 
 .form {
   display: flex;

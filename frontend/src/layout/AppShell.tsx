@@ -1,5 +1,7 @@
 import LogoutRounded from '@mui/icons-material/LogoutRounded'
 import AutoStoriesRounded from '@mui/icons-material/AutoStoriesRounded'
+import DarkModeRounded from '@mui/icons-material/DarkModeRounded'
+import LightModeRounded from '@mui/icons-material/LightModeRounded'
 import {
   AppBar,
   Avatar,
@@ -18,12 +20,14 @@ import { alpha } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import { Link as RouterLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { useThemeMode } from '../theme/ThemeContext'
 import { userRoleUa } from '../utils/labels'
 
 export function AppShell() {
   const navigate = useNavigate()
   const { user, logout, meContext } = useAuth()
   const theme = useTheme()
+  const { mode, toggleTheme } = useThemeMode()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   function handleLogout() {
@@ -126,6 +130,28 @@ export function AppShell() {
             {/* Spacer */}
             <Box sx={{ flex: 1 }} />
 
+            {/* Theme toggle */}
+            <Tooltip title={mode === 'dark' ? 'Світла тема' : 'Темна тема'}>
+              <IconButton
+                size="small"
+                onClick={toggleTheme}
+                sx={{
+                  color: 'text.secondary',
+                  transition: 'all .2s',
+                  '&:hover': {
+                    color: 'primary.main',
+                    bgcolor: alpha(theme.palette.primary.main, 0.08),
+                  },
+                }}
+              >
+                {mode === 'dark' ? (
+                  <LightModeRounded fontSize="small" />
+                ) : (
+                  <DarkModeRounded fontSize="small" />
+                )}
+              </IconButton>
+            </Tooltip>
+
             {/* User info */}
             {user && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1.5 } }}>
@@ -136,7 +162,7 @@ export function AppShell() {
                     fontWeight: 600,
                     fontSize: isMobile ? '0.7rem' : '0.75rem',
                     bgcolor: alpha(theme.palette.primary.main, 0.1),
-                    color: 'primary.light',
+                    color: 'primary.main',
                     border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
                   }}
                 />
@@ -151,7 +177,7 @@ export function AppShell() {
                           fontSize: '0.75rem',
                           fontWeight: 700,
                           bgcolor: alpha(theme.palette.primary.main, 0.2),
-                          color: 'primary.light',
+                          color: 'primary.main',
                         }}
                       >
                         {initials}
@@ -183,11 +209,11 @@ export function AppShell() {
                     startIcon={<LogoutRounded />}
                     onClick={handleLogout}
                     sx={{
-                      borderColor: alpha('#fff', 0.1),
+                      borderColor: (t) => alpha(t.palette.divider, 1),
                       color: 'text.secondary',
                       '&:hover': {
                         borderColor: 'error.main',
-                        color: 'error.light',
+                        color: 'error.main',
                         bgcolor: alpha(theme.palette.error.main, 0.06),
                       },
                     }}

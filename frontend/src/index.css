@@ -1,7 +1,6 @@
 /* ── Global Reset — решта стилів контролюється MUI Theme ── */
 
 html {
-  color-scheme: dark;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -30,5 +29,5 @@ a { transition: color .15s ease; }
 /* Selection highlight */
 ::selection {
   background: rgba(167, 139, 250, 0.3);
-  color: #fafafa;
+  color: inherit;
 }

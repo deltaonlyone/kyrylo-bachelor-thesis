@@ -57,6 +57,10 @@ type DraftLesson = {
   quizTitle: string
   passingScore: number
   questions: DraftQuestion[]
+  practicalTaskEnabled: boolean
+  practicalTaskId?: number
+  practicalTaskTitle: string
+  practicalTaskDescription: string
 }
 type DraftModule = {
   key: string
@@ -88,6 +92,9 @@ function emptyLesson(): DraftLesson {
     quizTitle: '',
     passingScore: 60,
     questions: [emptyQuestion(1)],
+    practicalTaskEnabled: false,
+    practicalTaskTitle: 'Нове завдання',
+    practicalTaskDescription: '<p></p>',
   }
 }
 
@@ -133,6 +140,10 @@ function toDraft(course?: Course): {
             correct: Boolean(o.correct),
           })),
         })),
+        practicalTaskEnabled: !!l.practicalTask,
+        practicalTaskId: l.practicalTask?.id,
+        practicalTaskTitle: l.practicalTask?.title ?? 'Нове завдання',
+        practicalTaskDescription: l.practicalTask?.description ?? '<p></p>',
       })),
     })),
   }
@@ -206,6 +217,13 @@ export function CourseEditorForm({
                 })),
               }
             : null,
+          practicalTask: l.practicalTaskEnabled
+            ? {
+                id: l.practicalTaskId,
+                title: l.practicalTaskTitle.trim(),
+                description: l.practicalTaskDescription,
+              }
+            : null,
         })),
       })),
     }
@@ -258,6 +276,9 @@ export function CourseEditorForm({
               <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                 <Button size="small" variant={l.quizEnabled ? 'contained' : 'outlined'} onClick={() => setModules((p) => p.map((x) => x.key === m.key ? { ...x, lessons: x.lessons.map((y) => y.key === l.key ? { ...y, quizEnabled: !y.quizEnabled } : y) } : x))}>
                   {l.quizEnabled ? 'Прибрати тест' : 'Додати тест'}
+                </Button>
+                <Button size="small" variant={l.practicalTaskEnabled ? 'contained' : 'outlined'} color="secondary" onClick={() => setModules((p) => p.map((x) => x.key === m.key ? { ...x, lessons: x.lessons.map((y) => y.key === l.key ? { ...y, practicalTaskEnabled: !y.practicalTaskEnabled } : y) } : x))}>
+                  {l.practicalTaskEnabled ? 'Прибрати код-рев\'ю' : 'Додати код-рев\'ю'}
                 </Button>
               </Box>
               {l.quizEnabled ? (
@@ -480,6 +501,22 @@ export function CourseEditorForm({
                   >
                     Додати питання
                   </Button>
+                </Box>
+              ) : null}
+              {l.practicalTaskEnabled ? (
+                <Box sx={{ mt: 2, display: 'grid', gap: 1.5, p: 2, border: '1px dashed', borderColor: 'secondary.main', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" color="secondary.main">Практичне завдання (Code Review)</Typography>
+                  <TextField
+                    label="Назва завдання"
+                    value={l.practicalTaskTitle}
+                    onChange={(e) => setModules((p) => p.map((x) => x.key === m.key ? { ...x, lessons: x.lessons.map((y) => y.key === l.key ? { ...y, practicalTaskTitle: e.target.value } : y) } : x))}
+                  />
+                  <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>Опис завдання (Markdown/HTML)</Typography>
+                  <RichTextEditor
+                    value={l.practicalTaskDescription}
+                    onUploadImage={pickImage}
+                    onChange={(value) => setModules((p) => p.map((x) => x.key === m.key ? { ...x, lessons: x.lessons.map((y) => y.key === l.key ? { ...y, practicalTaskDescription: value } : y) } : x))}
+                  />
                 </Box>
               ) : null}
             </Paper>

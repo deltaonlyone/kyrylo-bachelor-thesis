@@ -52,6 +52,11 @@ public class Course {
     @Builder.Default
     private List<CourseModule> modules = new ArrayList<>();
 
+    /** Навички, які присвоюються після успішного проходження курсу. */
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<CourseSkill> skills = new ArrayList<>();
+
     public void addModule(CourseModule module) {
         modules.add(module);
         module.setCourse(this);

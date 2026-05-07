@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("null")
 public class DataInitializer {
 
     private final UserRepository userRepository;

@@ -45,4 +45,8 @@ public class Lesson {
     /** Квіз, прив'язаний до уроку (може бути null — не всі уроки мають тест). */
     @OneToOne(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Quiz quiz;
+
+    /** Практичне завдання (Code Review), прив'язане до уроку. */
+    @OneToOne(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private PracticalTask practicalTask;
 }

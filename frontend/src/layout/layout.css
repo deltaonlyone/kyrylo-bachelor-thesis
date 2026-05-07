@@ -94,13 +94,11 @@
   color: #b91c1c;
 }
 
-@media (prefers-color-scheme: dark) {
-  .btn--danger {
+[data-mui-color-scheme="dark"] .btn--danger {
     color: #fca5a5;
     background: rgba(248, 113, 113, 0.1);
     border-color: rgba(248, 113, 113, 0.35);
   }
-}
 
 .btn--small {
   padding: 0.35rem 0.65rem;

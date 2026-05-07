@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -96,5 +97,14 @@ public class OrganizationController {
             @PathVariable Long userId,
             @Valid @RequestBody UpdateCuratorOrgRoleRequest request) {
         organizationApplicationService.updateCuratorOrgRole(principal, organizationId, userId, request);
+    }
+
+    @DeleteMapping("/{organizationId}/members/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeMember(
+            @AuthenticationPrincipal SecurityUserPrincipal principal,
+            @PathVariable Long organizationId,
+            @PathVariable Long userId) {
+        organizationApplicationService.removeMember(principal, organizationId, userId);
     }
 }

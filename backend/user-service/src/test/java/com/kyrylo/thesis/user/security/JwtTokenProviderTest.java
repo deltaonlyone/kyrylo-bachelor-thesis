@@ -14,6 +14,7 @@ import com.kyrylo.thesis.user.domain.UserRole;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
+@SuppressWarnings("deprecation")
 class JwtTokenProviderTest {
 
     @Test

@@ -39,4 +39,14 @@ public final class OrgAccess {
                 .map(OrganizationContextDto::getOrganizationId)
                 .collect(Collectors.toSet());
     }
+
+    public static Set<Long> learnerOrganizationIds(MeContextDto ctx) {
+        if (ctx.getOrganizations() == null) {
+            return Set.of();
+        }
+        return ctx.getOrganizations().stream()
+                .filter(o -> o.getMemberKind() == OrganizationMemberKind.LEARNER)
+                .map(OrganizationContextDto::getOrganizationId)
+                .collect(Collectors.toSet());
+    }
 }

@@ -10,6 +10,7 @@ import com.kyrylo.thesis.course.integration.userservice.MeContextDto;
 import com.kyrylo.thesis.course.integration.userservice.UserResponseDto;
 
 @Component
+@SuppressWarnings("null")
 public class UserDirectoryClient {
 
     private final RestClient userServiceClient;
@@ -34,22 +35,28 @@ public class UserDirectoryClient {
                 .body(UserResponseDto.class);
     }
 
-    /** Додає слухача до організації (ідемпотентно ігнорує 409). */
-    public void tryAddLearnerToOrganization(Long organizationId, Long learnerUserId, String authorizationHeader) {
-        String body = "{\"userId\": " + learnerUserId + "}";
+    /** Перевіряє, чи є користувач учасником організації. */
+    public boolean isLearnerInOrganization(Long organizationId, Long learnerUserId, String authorizationHeader) {
         try {
-            userServiceClient.post()
-                    .uri("/api/organizations/{id}/members/learners", organizationId)
+            java.util.List<?> members = userServiceClient.get()
+                    .uri("/api/organizations/{id}/members", organizationId)
                     .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(body)
                     .retrieve()
-                    .toBodilessEntity();
-        } catch (RestClientResponseException e) {
-            if (e.getStatusCode().value() == 409) {
-                return;
+                    .body(java.util.List.class);
+            
+            if (members == null) return false;
+            
+            for (Object obj : members) {
+                if (obj instanceof java.util.Map<?, ?> map) {
+                    Object idObj = map.get("userId");
+                    if (idObj instanceof Number n && n.longValue() == learnerUserId) {
+                        return true;
+                    }
+                }
             }
-            throw e;
+            return false;
+        } catch (RestClientResponseException e) {
+            return false;
         }
     }
 }

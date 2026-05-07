@@ -14,12 +14,14 @@ import com.kyrylo.thesis.user.domain.UserRole;
 import com.kyrylo.thesis.user.repository.UserRepository;
 import com.kyrylo.thesis.user.security.SecurityUserPrincipal;
 import com.kyrylo.thesis.user.web.dto.CreateUserRequest;
+import com.kyrylo.thesis.user.web.dto.UpdateUserRequest;
 import com.kyrylo.thesis.user.web.dto.UserResponse;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class UserApplicationService {
 
     private final UserRepository userRepository;
@@ -66,6 +68,43 @@ public class UserApplicationService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Створення користувачів — лише для супер-адміна");
         }
         return createUser(request);
+    }
+
+    @Transactional
+    public UserResponse updateUserAsSuperAdmin(Long actorUserId, Long targetUserId, UpdateUserRequest request) {
+        User actor = userRepository.findById(actorUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        if (actor.getRole() != UserRole.CURATOR
+                || actor.getCuratorGlobalRole() != CuratorGlobalRole.SUPER_ADMIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Редагування користувачів — лише для супер-адміна");
+        }
+
+        User target = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Користувача не знайдено"));
+
+        String newEmail = request.getEmail().trim().toLowerCase();
+        if (!target.getEmail().equals(newEmail)) {
+            userRepository.findByEmail(newEmail).ifPresent(u -> {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Цей email вже використовується");
+            });
+        }
+
+        target.setEmail(newEmail);
+        target.setFirstName(request.getFirstName().trim());
+        target.setLastName(request.getLastName().trim());
+        target.setRole(request.getRole());
+        
+        CuratorGlobalRole cgr = CuratorGlobalRole.NONE;
+        if (request.getRole() == UserRole.CURATOR && request.getCuratorGlobalRole() != null) {
+            cgr = request.getCuratorGlobalRole();
+        }
+        target.setCuratorGlobalRole(cgr);
+
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            target.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        }
+
+        return toResponse(target);
     }
 
     @Transactional(readOnly = true)

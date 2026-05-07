@@ -25,6 +25,7 @@ import com.kyrylo.thesis.user.web.dto.CreateUserRequest;
 import com.kyrylo.thesis.user.web.dto.UserResponse;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 class UserApplicationServiceTest {
 
     @Mock

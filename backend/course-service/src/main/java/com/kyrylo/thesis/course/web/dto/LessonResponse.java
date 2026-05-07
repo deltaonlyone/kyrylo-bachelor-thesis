@@ -20,4 +20,9 @@ public class LessonResponse {
     private Boolean hasQuiz = false;
 
     private QuizResponse quiz;
+
+    @Builder.Default
+    private Boolean hasPracticalTask = false;
+
+    private PracticalTaskResponse practicalTask;
 }

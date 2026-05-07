@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.kyrylo.thesis.course.domain.AnswerOption;
 import com.kyrylo.thesis.course.domain.Course;
 import com.kyrylo.thesis.course.domain.CourseModule;
+import com.kyrylo.thesis.course.domain.Enrollment;
 import com.kyrylo.thesis.course.domain.Lesson;
 import com.kyrylo.thesis.course.domain.Question;
 import com.kyrylo.thesis.course.domain.QuestionType;
@@ -39,6 +40,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class CourseApplicationService {
 
     private final CourseRepository courseRepository;
@@ -92,7 +94,14 @@ public class CourseApplicationService {
                     .toList();
         }
         if (ctx.getRole() == UserRole.LEARNER) {
-            return courseRepository.findByStatus(CourseStatus.PUBLISHED).stream()
+            List<Long> enrolledCourseIds = enrollmentRepository.findByUserId(ctx.getUserId()).stream()
+                    .map(Enrollment::getCourseId)
+                    .toList();
+            if (enrolledCourseIds.isEmpty()) {
+                return List.of();
+            }
+            return courseRepository.findAllById(enrolledCourseIds).stream()
+                    .filter(c -> c.getStatus() == CourseStatus.PUBLISHED)
                     .sorted(Comparator.comparing(Course::getId))
                     .map(this::toSummary)
                     .toList();
@@ -160,9 +169,6 @@ public class CourseApplicationService {
             return;
         }
         if (ctx.getRole() == UserRole.LEARNER) {
-            if (course.getStatus() == CourseStatus.PUBLISHED) {
-                return;
-            }
             if (enrollmentRepository.existsByUserIdAndCourseId(ctx.getUserId(), course.getId())) {
                 return;
             }
@@ -265,6 +271,7 @@ public class CourseApplicationService {
             lesson.setTitle(lr.getTitle().trim());
             lesson.setContent(lr.getContent());
             mergeQuiz(lesson, lr.getQuiz(), allowIds);
+            mergePracticalTask(lesson, lr.getPracticalTask(), allowIds);
             nextLessons.add(lesson);
         }
 
@@ -272,6 +279,25 @@ public class CourseApplicationService {
         for (Lesson lesson : nextLessons) {
             module.addLesson(lesson);
         }
+    }
+
+    private void mergePracticalTask(Lesson lesson, com.kyrylo.thesis.course.web.dto.CreatePracticalTaskRequest request, boolean allowIds) {
+        if (request == null) {
+            lesson.setPracticalTask(null);
+            return;
+        }
+
+        com.kyrylo.thesis.course.domain.PracticalTask task = lesson.getPracticalTask();
+        if (task == null || !allowIds) {
+            task = com.kyrylo.thesis.course.domain.PracticalTask.builder().build();
+            task.setLesson(lesson);
+            lesson.setPracticalTask(task);
+        } else if (request.getId() != null && task.getId() != null && !task.getId().equals(request.getId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Практичне завдання не належить уроку");
+        }
+
+        task.setTitle(request.getTitle().trim());
+        task.setDescription(request.getDescription().trim());
     }
 
     private void mergeQuiz(Lesson lesson, CreateQuizRequest request, boolean allowIds) {
@@ -396,6 +422,12 @@ public class CourseApplicationService {
                                                                         .toList())
                                                                 .build())
                                                         .toList())
+                                                .build())
+                                        .hasPracticalTask(l.getPracticalTask() != null)
+                                        .practicalTask(l.getPracticalTask() == null ? null : com.kyrylo.thesis.course.web.dto.PracticalTaskResponse.builder()
+                                                .id(l.getPracticalTask().getId())
+                                                .title(l.getPracticalTask().getTitle())
+                                                .description(l.getPracticalTask().getDescription())
                                                 .build())
                                         .build())
                                 .toList())

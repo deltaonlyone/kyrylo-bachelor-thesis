@@ -2,14 +2,18 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import LoginRounded from '@mui/icons-material/LoginRounded'
 import AutoStoriesRounded from '@mui/icons-material/AutoStoriesRounded'
+import DarkModeRounded from '@mui/icons-material/DarkModeRounded'
+import LightModeRounded from '@mui/icons-material/LightModeRounded'
 import {
   Alert,
   Box,
   Button,
   CircularProgress,
   Container,
+  IconButton,
   Paper,
   TextField,
+  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material'
@@ -17,6 +21,7 @@ import { alpha } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { useThemeMode } from '../theme/ThemeContext'
 import type { UserRole } from '../types/user'
 
 const ROLE_PATH: Record<UserRole, string> = {
@@ -32,6 +37,7 @@ export function LoginPage() {
   const navigate = useNavigate()
   const theme = useTheme()
   const { login, isAuthenticated, user } = useAuth()
+  const { mode, toggleTheme } = useThemeMode()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -83,6 +89,33 @@ export function LoginPage() {
         bgcolor: 'background.default',
       }}
     >
+      {/* Theme toggle */}
+      <Tooltip title={mode === 'dark' ? 'Світла тема' : 'Темна тема'}>
+        <IconButton
+          size="small"
+          onClick={toggleTheme}
+          sx={{
+            position: 'absolute',
+            top: 16,
+            right: 16,
+            zIndex: 10,
+            color: 'text.secondary',
+            bgcolor: alpha(theme.palette.background.paper, 0.5),
+            backdropFilter: 'blur(8px)',
+            transition: 'all .2s',
+            '&:hover': {
+              color: 'primary.main',
+              bgcolor: alpha(theme.palette.primary.main, 0.08),
+            },
+          }}
+        >
+          {mode === 'dark' ? (
+            <LightModeRounded fontSize="small" />
+          ) : (
+            <DarkModeRounded fontSize="small" />
+          )}
+        </IconButton>
+      </Tooltip>
       {/* ── Ambient glow ── */}
       <Box
         sx={{
@@ -90,9 +123,9 @@ export function LoginPage() {
           inset: 0,
           pointerEvents: 'none',
           background: `
-            radial-gradient(ellipse 80% 55% at 50% -20%, ${alpha(theme.palette.primary.main, 0.2)}, transparent 60%),
-            radial-gradient(ellipse 50% 40% at 95% 95%, ${alpha(theme.palette.primary.dark, 0.15)}, transparent 50%),
-            radial-gradient(ellipse 40% 35% at 5% 85%, ${alpha('#6366f1', 0.1)}, transparent 45%)
+            radial-gradient(ellipse 80% 55% at 50% -20%, ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.15)}, transparent 60%),
+            radial-gradient(ellipse 50% 40% at 95% 95%, ${alpha(theme.palette.primary.dark, theme.palette.mode === 'dark' ? 0.15 : 0.08)}, transparent 50%),
+            radial-gradient(ellipse 40% 35% at 5% 85%, ${alpha('#6366f1', theme.palette.mode === 'dark' ? 0.1 : 0.06)}, transparent 45%)
           `,
         }}
       />
@@ -103,10 +136,10 @@ export function LoginPage() {
           position: 'absolute',
           inset: 0,
           pointerEvents: 'none',
-          opacity: 0.025,
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)
+          opacity: theme.palette.mode === 'dark' ? 0.025 : 0.06,
+          backgroundImage: (t) => `
+            linear-gradient(${alpha(t.palette.text.primary, 0.5)} 1px, transparent 1px),
+            linear-gradient(90deg, ${alpha(t.palette.text.primary, 0.5)} 1px, transparent 1px)
           `,
           backgroundSize: '60px 60px',
         }}
@@ -122,14 +155,12 @@ export function LoginPage() {
             p: { xs: 3, sm: 5 },
             borderRadius: 4,
             border: 1,
-            borderColor: alpha('#fff', 0.06),
-            bgcolor: alpha(theme.palette.background.paper, 0.75),
+            borderColor: (t) => t.palette.divider,
+            bgcolor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.75 : 0.85),
             backdropFilter: 'blur(24px) saturate(1.5)',
-            boxShadow: `
-              0 0 0 1px ${alpha('#fff', 0.03)},
-              0 8px 40px ${alpha('#000', 0.5)},
-              0 2px 8px ${alpha('#000', 0.3)}
-            `,
+            boxShadow: theme.palette.mode === 'dark'
+              ? `0 0 0 1px ${alpha('#fff', 0.03)}, 0 8px 40px ${alpha('#000', 0.5)}, 0 2px 8px ${alpha('#000', 0.3)}`
+              : `0 0 0 1px ${alpha('#000', 0.03)}, 0 8px 40px ${alpha('#6366f1', 0.08)}, 0 2px 8px ${alpha('#000', 0.06)}`,
           }}
         >
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>

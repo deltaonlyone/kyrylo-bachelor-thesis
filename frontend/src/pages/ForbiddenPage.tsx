@@ -45,10 +45,12 @@ export function ForbiddenPage() {
             p: { xs: 3, sm: 5 },
             borderRadius: 4,
             border: 1,
-            borderColor: alpha('#fff', 0.06),
-            bgcolor: alpha(theme.palette.background.paper, 0.75),
+            borderColor: (t) => t.palette.divider,
+            bgcolor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.75 : 0.85),
             backdropFilter: 'blur(24px)',
-            boxShadow: `0 8px 40px ${alpha('#000', 0.5)}`,
+            boxShadow: theme.palette.mode === 'dark'
+              ? `0 8px 40px ${alpha('#000', 0.5)}`
+              : `0 8px 40px ${alpha('#6366f1', 0.08)}`,
             textAlign: 'center',
           }}
         >

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kyrylo.thesis.course.security.SecurityUserPrincipal;
 import com.kyrylo.thesis.course.service.EnrollmentApplicationService;
+import com.kyrylo.thesis.course.web.dto.CourseProgressResponse;
 import com.kyrylo.thesis.course.web.dto.EnrollmentResponse;
 import com.kyrylo.thesis.course.web.dto.EnrollLearnerRequest;
 import com.kyrylo.thesis.course.web.dto.StudentProgressResponse;
@@ -62,6 +64,18 @@ public class EnrollmentController {
     }
 
     /**
+     * DELETE /api/enrollments/{courseId}/learners/{userId} — відрахування слухача (Educator/Curator).
+     */
+    @DeleteMapping("/{courseId}/learners/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unenrollLearner(
+            HttpServletRequest httpRequest,
+            @PathVariable Long courseId,
+            @PathVariable Long userId) {
+        enrollmentService.unenrollLearner(bearer(httpRequest), courseId, userId);
+    }
+
+    /**
      * GET /api/enrollments/students/{courseId} — список студентів курсу (куратор / викладач).
      */
     @GetMapping("/students/{courseId}")
@@ -69,6 +83,16 @@ public class EnrollmentController {
             HttpServletRequest httpRequest,
             @PathVariable Long courseId) {
         return enrollmentService.getStudentsByCourse(bearer(httpRequest), courseId);
+    }
+
+    /**
+     * GET /api/enrollments/{courseId}/progress — детальний прогрес слухача по курсу.
+     */
+    @GetMapping("/{courseId}/progress")
+    public CourseProgressResponse getCourseProgress(
+            @AuthenticationPrincipal SecurityUserPrincipal principal,
+            @PathVariable Long courseId) {
+        return enrollmentService.getCourseProgress(principal.userId(), courseId);
     }
 
     private static String bearer(HttpServletRequest req) {

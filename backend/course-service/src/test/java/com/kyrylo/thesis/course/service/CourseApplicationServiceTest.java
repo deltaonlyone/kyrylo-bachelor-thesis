@@ -25,6 +25,7 @@ import com.kyrylo.thesis.course.repository.EnrollmentRepository;
 import com.kyrylo.thesis.course.web.dto.CreateCourseRequest;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 class CourseApplicationServiceTest {
 
     @Mock
