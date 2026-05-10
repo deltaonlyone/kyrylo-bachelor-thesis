@@ -95,7 +95,7 @@ public class CourseApplicationService {
         }
         if (ctx.getRole() == UserRole.LEARNER) {
             List<Long> enrolledCourseIds = enrollmentRepository.findByUserId(ctx.getUserId()).stream()
-                    .map(Enrollment::getCourseId)
+                    .map(e -> e.getCourse().getId())
                     .toList();
             if (enrolledCourseIds.isEmpty()) {
                 return List.of();
