@@ -55,16 +55,27 @@ class CourseApplicationServiceTest {
     }
 
     @Test
-    void listCourses_asLearner_returnsPublishedOnly() {
+    void listCourses_asLearner_returnsEnrolledPublishedOnly() {
         MeContextDto ctx = new MeContextDto();
         ctx.setRole(UserRole.LEARNER);
+        ctx.setUserId(5L);
         when(userDirectoryClient.fetchMeContext(any())).thenReturn(ctx);
 
         Course c1 = Course.builder().id(1L).organizationId(10L).title("A").status(CourseStatus.PUBLISHED).build();
-        when(courseRepository.findByStatus(CourseStatus.PUBLISHED)).thenReturn(List.of(c1));
+        Course c2 = Course.builder().id(2L).organizationId(10L).title("B").status(CourseStatus.DRAFT).build();
+
+        com.kyrylo.thesis.course.domain.Enrollment e1 = com.kyrylo.thesis.course.domain.Enrollment.builder()
+                .id(1L).userId(5L).course(c1).status(com.kyrylo.thesis.course.domain.EnrollmentStatus.ENROLLED).progressPercentage(0).build();
+        com.kyrylo.thesis.course.domain.Enrollment e2 = com.kyrylo.thesis.course.domain.Enrollment.builder()
+                .id(2L).userId(5L).course(c2).status(com.kyrylo.thesis.course.domain.EnrollmentStatus.ENROLLED).progressPercentage(0).build();
+
+        when(enrollmentRepository.findByUserId(5L)).thenReturn(List.of(e1, e2));
+        when(courseRepository.findAllById(List.of(1L, 2L))).thenReturn(List.of(c1, c2));
 
         var list = service.listCourses("auth");
+        // Лише PUBLISHED курс повертається
         assertEquals(1, list.size());
+        assertEquals(1L, list.get(0).getId());
     }
 
     @Test
